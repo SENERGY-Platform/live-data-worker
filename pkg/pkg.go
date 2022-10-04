@@ -21,31 +21,37 @@ import (
 	"github.com/SENERGY-Platform/live-data-worker/pkg/api"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/auth"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/configuration"
+	"github.com/SENERGY-Platform/live-data-worker/pkg/interfaces"
+	"github.com/SENERGY-Platform/live-data-worker/pkg/kafka"
+	"github.com/SENERGY-Platform/live-data-worker/pkg/mqtt"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/taskmanager"
-	"log"
+	"sync"
 )
 
-func Start(ctx context.Context, config configuration.Config) error {
-	onTaskChanged := func(map[string]taskmanager.Task) {
-		log.Println("task list changed, but task handling not implemented")
-	}
+func Start(ctx context.Context, config configuration.Config) (wg *sync.WaitGroup, err error) {
+	wg = &sync.WaitGroup{}
 
-	if !config.MgwMode {
-		// TODO overwrite onTaskChanged: consume from Kafka
-	} else {
-		// TODO overwrite onTaskChanged: consume from MQTT
-	}
+	authentication := auth.New(config.AuthEndpoint, config.AuthClientId, config.AuthClientSecret, config.AuthUserName, config.AuthPassword)
+	taskManager := taskmanager.New()
+	mqttManager, err := mqtt.NewManager(ctx, wg, config, taskManager, authentication)
 
-	manager := taskmanager.New(onTaskChanged)
+	var taskHandler interfaces.TaskHandler
 	if !config.MgwMode {
-		authentication := auth.New(config.AuthEndpoint, config.AuthClientId, config.AuthClientSecret)
-		err := api.Start(ctx, config, manager, authentication)
+		err = api.Start(ctx, config, authentication, mqttManager.Client)
 		if err != nil {
-			return err
+			return wg, err
+		}
+		taskHandler, err = kafka.NewTaskHandler(ctx, wg, config, mqttManager.Client, authentication)
+		if err != nil {
+			return wg, err
 		}
 	} else {
-		// TODO consume tasks from MQTT
+		taskHandler, err = mqtt.NewTaskHandler(ctx, mqttManager.Client, config, authentication)
+		if err != nil {
+			return wg, err
+		}
 	}
+	taskManager.SetOnTaskListChanged(taskHandler.UpdateTasks)
 
-	return nil
+	return wg, nil
 }

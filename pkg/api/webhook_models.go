@@ -60,8 +60,3 @@ type OnlineWebhookMsg struct {
 type DisconnectWebhookMsg struct {
 	ClientId string `json:"client_id"`
 }
-
-type Device struct {
-	Id      string `json:"id"`
-	LocalId string `json:"local_id"`
-}

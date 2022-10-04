@@ -39,19 +39,21 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	err = pkg.Start(ctx, config)
+	wg, err := pkg.Start(ctx, config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	var shutdownTime time.Time
 	go func() {
 		shutdown := make(chan os.Signal, 1)
 		signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 		sig := <-shutdown
 		log.Println("received shutdown signal", sig)
+		shutdownTime = time.Now()
 		cancel()
 	}()
 
-	<-ctx.Done()                //waiting for context end; may happen by shutdown signal
-	time.Sleep(1 * time.Second) //give go routines time for cleanup and last messages
+	wg.Wait()
+	log.Println("Shutdown complete, took", time.Since(shutdownTime))
 }

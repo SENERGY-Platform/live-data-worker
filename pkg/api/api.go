@@ -23,7 +23,7 @@ import (
 	"github.com/SENERGY-Platform/live-data-worker/pkg/api/util"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/auth"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/configuration"
-	"github.com/SENERGY-Platform/live-data-worker/pkg/taskmanager"
+	"github.com/SENERGY-Platform/live-data-worker/pkg/mqtt"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -32,15 +32,15 @@ import (
 	"runtime/debug"
 )
 
-var endpoints = []func(config configuration.Config, router *httprouter.Router, manager *taskmanager.Manager, authentication *auth.Auth){}
+var endpoints = []func(config configuration.Config, router *httprouter.Router, authentication *auth.Auth, mqttClient *mqtt.Client){}
 
-func Start(ctx context.Context, config configuration.Config, manager *taskmanager.Manager, authentication *auth.Auth) (err error) {
+func Start(ctx context.Context, config configuration.Config, authentication *auth.Auth, mqttClient *mqtt.Client) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint(r))
 		}
 	}()
-	router := GetRouter(config, manager, authentication)
+	router := GetRouter(config, authentication, mqttClient)
 
 	server := &http.Server{Addr: ":" + config.ServerPort, Handler: router}
 	go func() {
@@ -57,11 +57,11 @@ func Start(ctx context.Context, config configuration.Config, manager *taskmanage
 	return
 }
 
-func GetRouter(config configuration.Config, manager *taskmanager.Manager, authentication *auth.Auth) http.Handler {
+func GetRouter(config configuration.Config, authentication *auth.Auth, mqttClient *mqtt.Client) http.Handler {
 	router := httprouter.New()
 	for _, e := range endpoints {
 		log.Println("add endpoint: " + runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name())
-		e(config, router, manager, authentication)
+		e(config, router, authentication, mqttClient)
 	}
 	var handler http.Handler = router
 	handler = util.NewVersionHeaderMiddleware(handler)

@@ -19,26 +19,26 @@ package configuration
 import (
 	"encoding/json"
 	"fmt"
+	dc_conf "github.com/SENERGY-Platform/device-command/pkg/configuration"
 	"log"
 	"os"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Config struct {
 	MgwMode bool `json:"mgw_mode"`
 
-	ServerPort     string `json:"server_port"`
-	MarshallerUrl  string `json:"marshaller_url"`
-	PermissionsUrl string `json:"permissions_url"`
+	ServerPort          string `json:"server_port"`
+	MarshallerUrl       string `json:"marshaller_url"`
+	PermissionsUrl      string `json:"permissions_url"`
+	DeviceManagerUrl    string `json:"device_manager_url"`
+	DeviceRepositoryUrl string `json:"device_repository_url"`
 
-	KafkaUrl               string        `json:"kafka_url"`
-	DefaultTimeout         string        `json:"default_timeout"`
-	DefaultTimeoutDuration time.Duration `json:"-"`
-	KafkaConsumerGroup     string        `json:"kafka_consumer_group"`
+	KafkaUrl           string `json:"kafka_url"`
+	KafkaConsumerGroup string `json:"kafka_consumer_group"`
 
 	MqttHost             string `json:"mqtt_host"`
 	MqttPort             string `json:"mqtt_port"`
@@ -54,8 +54,26 @@ type Config struct {
 	AuthEndpoint     string `json:"auth_endpoint"`
 	AuthClientId     string `json:"auth_client_id"`
 	AuthClientSecret string `json:"auth_client_secret"`
+	AuthUserName     string `json:"auth_user_name"`
+	AuthPassword     string `json:"auth_password"`
 
 	Debug bool `json:"debug"`
+}
+
+func (config Config) ToDcConf() dc_conf.Config {
+	return dc_conf.Config{
+		MarshallerUrl:                 config.MarshallerUrl,
+		DeviceManagerUrl:              config.DeviceManagerUrl,
+		DeviceRepositoryUrl:           config.DeviceRepositoryUrl,
+		PermissionsUrl:                config.PermissionsUrl,
+		UseIotFallback:                false,
+		AuthEndpoint:                  config.AuthEndpoint,
+		AuthClientId:                  config.AuthClientId,
+		AuthUserName:                  config.AuthUserName,
+		AuthPassword:                  config.AuthPassword,
+		MgwConceptRepoRefreshInterval: 3600,
+		IotFallbackFile:               "devicerepo_fallback.json",
+	}
 }
 
 // loads config from json in location and used environment variables (e.g ZookeeperUrl --> ZOOKEEPER_URL)
@@ -72,7 +90,6 @@ func Load(location string) (config Config, err error) {
 		return config, error
 	}
 	handleEnvironmentVars(&config)
-	config.DefaultTimeoutDuration, err = time.ParseDuration(config.DefaultTimeout)
 	return config, err
 }
 

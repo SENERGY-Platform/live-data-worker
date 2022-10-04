@@ -33,7 +33,11 @@ func (auth *Auth) GetUserToken(username string, password string) (token JwtToken
 	return openid.JwtToken(), err
 }
 
-func (auth *Auth) ExchangeUserToken(userid string) (token JwtToken, err error) {
+func (auth *Auth) GetSelfToken() (token JwtToken, err error) {
+	return auth.GetUserToken(auth.authUsername, auth.authPassword)
+}
+
+func (auth *Auth) exchangeUserToken(userid string) (token JwtToken, err error) {
 	resp, err := http.PostForm(auth.authEndpoint+"/auth/realms/master/protocol/openid-connect/token", url.Values{
 		"client_id":         {auth.authClientId},
 		"client_secret":     {auth.authClientSecret},

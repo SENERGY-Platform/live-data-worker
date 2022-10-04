@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package taskmanager
+package interfaces
 
-type TaskInfo struct {
-	DeviceId, LocalDeviceId, ServiceId, LocalServiceId, FunctionId, AspectId, CharacteristicId string
+import (
+	"github.com/SENERGY-Platform/live-data-worker/pkg/taskmanager"
+)
+
+type TaskHandler interface {
+	UpdateTasks(tasks []taskmanager.Task)
 }

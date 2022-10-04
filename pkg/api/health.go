@@ -19,7 +19,7 @@ package api
 import (
 	"github.com/SENERGY-Platform/live-data-worker/pkg/auth"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/configuration"
-	"github.com/SENERGY-Platform/live-data-worker/pkg/taskmanager"
+	"github.com/SENERGY-Platform/live-data-worker/pkg/mqtt"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -28,7 +28,7 @@ func init() {
 	endpoints = append(endpoints, HealthEndpoint)
 }
 
-func HealthEndpoint(_ configuration.Config, router *httprouter.Router, _ *taskmanager.Manager, _ *auth.Auth) {
+func HealthEndpoint(_ configuration.Config, router *httprouter.Router, _ *auth.Auth, _ *mqtt.Client) {
 	router.GET("/", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		writer.WriteHeader(200)
 	})

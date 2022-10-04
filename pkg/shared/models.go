@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package pkg
+package shared
 
-import "github.com/SENERGY-Platform/live-data-worker/pkg/taskmanager"
-
-type InputManager interface {
-	UpdateTasks(tasks []taskmanager.Task)
+type Device struct {
+	Id      string `json:"id"`
+	LocalId string `json:"local_id"`
 }

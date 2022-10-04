@@ -21,11 +21,13 @@ import (
 	"sync"
 )
 
-func New(authEndpoint string, authClientId string, authClientSecret string) *Auth {
+func New(authEndpoint, authClientId, authClientSecret, authUsername, authPassword string) *Auth {
 	return &Auth{
 		authEndpoint:         authEndpoint,
 		authClientSecret:     authClientSecret,
 		authClientId:         authClientId,
+		authUsername:         authUsername,
+		authPassword:         authPassword,
 		tokenCacheExpiration: 3600,
 		cache:                cache.New(),
 	}
@@ -35,6 +37,8 @@ type Auth struct {
 	authEndpoint         string
 	authClientId         string
 	authClientSecret     string
+	authUsername         string
+	authPassword         string
 	openid               *OpenidToken
 	mux                  sync.Mutex
 	cache                *cache.Cache

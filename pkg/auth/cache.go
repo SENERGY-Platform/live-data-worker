@@ -31,7 +31,7 @@ func (auth *Auth) GetCachedUserToken(username string) (token JwtToken, err error
 			log.Println("ERROR: GetCachedUserToken() ", err)
 		}
 	}
-	token, err = auth.ExchangeUserToken(username)
+	token, err = auth.exchangeUserToken(username)
 	if err != nil {
 		log.Println("ERROR: GetCachedUserToken::GenerateUserToken()", err, username)
 		return

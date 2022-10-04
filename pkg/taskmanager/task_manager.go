@@ -18,6 +18,7 @@ package taskmanager
 
 import (
 	"golang.org/x/exp/maps"
+	"log"
 	"strings"
 	"sync"
 )
@@ -33,12 +34,21 @@ type Manager struct {
 	onTaskListChanged func([]Task)
 }
 
-func New(onTaskListChanged func([]Task)) *Manager {
+func New() *Manager {
+	onTaskChanged := func(tasks []Task) {
+		log.Println("WARN: task list changed, but task handling not set")
+	}
 	return &Manager{
 		tasks:             make(map[string]Task),
 		mux:               sync.Mutex{},
-		onTaskListChanged: onTaskListChanged,
+		onTaskListChanged: onTaskChanged,
 	}
+}
+
+func (manager *Manager) SetOnTaskListChanged(onTaskListChanged func([]Task)) {
+	manager.mux.Lock()
+	manager.onTaskListChanged = onTaskListChanged
+	manager.mux.Unlock()
 }
 
 // AddTasks Adds multiple tasks. If a task with the same ID already exists, it is overwritten. Blocks other operations until onTaskListChanged completes.
