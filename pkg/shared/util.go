@@ -71,38 +71,6 @@ func ParseSubscriptionTopic(config configuration.Config, topic string, username 
 			serviceId, localServiceId, functionId, aspectId, characteristicId, err
 	}
 	localServiceId = service.LocalId
-
-	/* TODO
-	if !config.MgwMode {
-		token, err := authentication.GetCachedUserToken(username)
-		if err != nil {
-			return deviceId, localDeviceId,
-				serviceId, localServiceId, functionId, aspectId, characteristicId, err
-		}
-		resp, err := token.Get(config.PermissionsUrl + "/v3/resources/devices?rights=x&filter=local_id=" + localDeviceId)
-		if err != nil {
-			return deviceId, localDeviceId,
-				serviceId, localServiceId, functionId, aspectId, characteristicId, err
-		}
-		if resp.StatusCode > 299 {
-			err = errors.New("unexpected statuscode " + strconv.Itoa(resp.StatusCode))
-			return deviceId, localDeviceId,
-				serviceId, localServiceId, functionId, aspectId, characteristicId, err
-		}
-		var devices []Device
-		err = json.NewDecoder(resp.Body).Decode(&devices)
-		if err != nil {
-			return deviceId, localDeviceId,
-				serviceId, localServiceId, functionId, aspectId, characteristicId, err
-		}
-		if len(devices) != 1 {
-			err = errors.New("unexpected number of devices received from permSearch")
-			return deviceId, localDeviceId,
-				serviceId, localServiceId, functionId, aspectId, characteristicId, err
-		}
-		deviceId = devices[0].Id
-	}
-	*/
 	return
 }
 

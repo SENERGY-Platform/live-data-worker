@@ -25,7 +25,9 @@ import (
 	"github.com/SENERGY-Platform/live-data-worker/pkg/mqtt"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/shared"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/taskmanager"
+	"github.com/segmentio/kafka-go"
 	"golang.org/x/exp/maps"
+	"io"
 	"log"
 	"strings"
 	"sync"
@@ -33,15 +35,19 @@ import (
 )
 
 type TaskHandler struct {
-	ctx          context.Context
-	cancel       context.CancelFunc
-	wg           *sync.WaitGroup
-	config       configuration.Config
-	mqttClient   *mqtt.Client
-	topicTasks   map[string][]taskmanager.Task
-	consumer     *Consumer
-	marsh        *marshaller.Marshaller
-	errorhandler func(err error)
+	ctx            context.Context
+	config         configuration.Config
+	mqttClient     *mqtt.Client
+	topicTasks     map[string][]taskmanager.Task
+	marsh          *marshaller.Marshaller
+	errorhandler   func(err error)
+	topicReader    map[string]readerContext
+	topicReaderMux sync.Mutex
+}
+
+type readerContext struct {
+	reader *kafka.Reader
+	cancel context.CancelFunc
 }
 
 func NewTaskHandler(ctx context.Context, config configuration.Config, mqttClient *mqtt.Client, authentication *auth.Auth) (*TaskHandler, error) {
@@ -50,13 +56,14 @@ func NewTaskHandler(ctx context.Context, config configuration.Config, mqttClient
 		return nil, err
 	}
 	return &TaskHandler{
-		ctx:          ctx,
-		wg:           &sync.WaitGroup{},
-		config:       config,
-		mqttClient:   mqttClient,
-		topicTasks:   map[string][]taskmanager.Task{},
-		marsh:        marsh,
-		errorhandler: defaultErrorHandler,
+		ctx:            ctx,
+		config:         config,
+		mqttClient:     mqttClient,
+		topicTasks:     map[string][]taskmanager.Task{},
+		marsh:          marsh,
+		errorhandler:   defaultErrorHandler,
+		topicReader:    map[string]readerContext{},
+		topicReaderMux: sync.Mutex{},
 	}, nil
 }
 
@@ -66,22 +73,24 @@ func (h *TaskHandler) UpdateTasks(tasks []taskmanager.Task) {
 		topic := strings.ReplaceAll(task.Info.ServiceId, ":", "_")
 		topicTasks = shared.Apsert(topicTasks, topic, task)
 	}
-	if h.consumer == nil || !shared.EqualStringSliceIgnoreOrder(maps.Keys(topicTasks), maps.Keys(h.topicTasks)) ||
-		!shared.EqualStringSliceIgnoreOrder(h.consumer.topics, maps.Keys(h.topicTasks)) {
-
-		if h.cancel != nil {
-			h.cancel()
-		}
-		h.wg.Wait()
-		ctx, cancel := context.WithCancel(h.ctx)
-		h.cancel = cancel // TODO problematic when subscriptions change rapidly, need to update on the fly
-		consumer, err := newConsumer(ctx, h.wg, h.config.KafkaUrl, maps.Keys(topicTasks), h.config.KafkaConsumerGroup,
-			Latest, h.onMessage, h.onError, h.config.Debug)
-		if err != nil {
-			h.errorhandler(err)
-		}
-		h.consumer = consumer
+	missing, added := shared.GetMissingOrAddedElements(maps.Keys(h.topicReader), maps.Keys(topicTasks))
+	wg := sync.WaitGroup{}
+	wg.Add(len(missing) + len(added))
+	for _, topic := range missing {
+		topic := topic
+		go func() {
+			h.removeReader(topic)
+			wg.Done()
+		}()
 	}
+	for _, topic := range added {
+		topic := topic
+		go func() {
+			h.addReader(topic)
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 	h.topicTasks = topicTasks
 	if h.config.Debug {
 		b, _ := json.MarshalIndent(h.topicTasks, "", "  ")
@@ -96,6 +105,7 @@ func (h *TaskHandler) SetErrorHandler(errorhandler func(err error)) {
 func (h *TaskHandler) onMessage(topic string, msg []byte, _ time.Time) error {
 	tasks, ok := h.topicTasks[topic]
 	if !ok {
+		log.Println("[WARNING]", "Got message on topic, but no active task", topic)
 		return nil
 	}
 	var msgDecoded DeviceMessage
@@ -120,12 +130,67 @@ func (h *TaskHandler) onMessage(topic string, msg []byte, _ time.Time) error {
 		}
 		deduplicate[task.Info.DeviceId+task.Info.AspectId+task.Info.FunctionId+task.Info.ServiceId+task.Info.CharacteristicId] = 0
 	}
-
 	return nil
 }
 
-func (h *TaskHandler) onError(err error, _ *Consumer) {
-	h.errorhandler(err)
+func (h *TaskHandler) addReader(topic string) {
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{h.config.KafkaUrl},
+		GroupID: h.config.KafkaConsumerGroup,
+		Topic:   topic,
+		MaxWait: 500 * time.Millisecond,
+	})
+	ctx, cancel := context.WithCancel(h.ctx)
+	h.topicReaderMux.Lock()
+	h.topicReader[topic] = readerContext{
+		reader: r,
+		cancel: cancel,
+	}
+	h.topicReaderMux.Unlock()
+	go func() {
+		for {
+			m, err := r.FetchMessage(ctx)
+			if err != nil {
+				if err == io.EOF || err == context.Canceled {
+					return
+				}
+				h.errorhandler(err)
+				return
+			}
+			err = h.onMessage(m.Topic, m.Value, m.Time)
+			if err != nil {
+				if err == io.EOF || err == context.Canceled {
+					return
+				}
+				h.errorhandler(err)
+				return
+			}
+			err = r.CommitMessages(ctx, m)
+			if err != nil {
+				if err == io.EOF || err == context.Canceled {
+					return
+				}
+				h.errorhandler(err)
+				return
+			}
+		}
+	}()
+}
+
+func (h *TaskHandler) removeReader(topic string) {
+	reader, ok := h.topicReader[topic]
+	if !ok {
+		return
+	}
+	reader.cancel()
+	err := reader.reader.Close()
+	if err != nil {
+		h.errorhandler(err)
+		return
+	}
+	h.topicReaderMux.Lock()
+	delete(h.topicReader, topic)
+	h.topicReaderMux.Unlock()
 }
 
 func defaultErrorHandler(err error) {
