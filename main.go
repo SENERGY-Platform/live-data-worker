@@ -38,13 +38,18 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	var shutdownTime time.Time
 
-	wg, err := pkg.Start(ctx, config)
+	wg, err := pkg.Start(ctx, func(err error) {
+		log.Println("[ERROR]", err.Error())
+		log.Println("Shutting down due to error!")
+		shutdownTime = time.Now()
+		cancel()
+	}, config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var shutdownTime time.Time
 	go func() {
 		shutdown := make(chan os.Signal, 1)
 		signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)

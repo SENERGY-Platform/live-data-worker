@@ -1,3 +1,5 @@
 .idea
 device-command
 *.iml
+devicerepo_fallback.json
+.run

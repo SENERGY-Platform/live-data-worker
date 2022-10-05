@@ -28,7 +28,7 @@ import (
 	"sync"
 )
 
-func Start(ctx context.Context, config configuration.Config) (wg *sync.WaitGroup, err error) {
+func Start(ctx context.Context, onError func(err error), config configuration.Config) (wg *sync.WaitGroup, err error) {
 	wg = &sync.WaitGroup{}
 
 	authentication := auth.New(config.AuthEndpoint, config.AuthClientId, config.AuthClientSecret, config.AuthUserName, config.AuthPassword)
@@ -41,7 +41,7 @@ func Start(ctx context.Context, config configuration.Config) (wg *sync.WaitGroup
 		if err != nil {
 			return wg, err
 		}
-		taskHandler, err = kafka.NewTaskHandler(ctx, wg, config, mqttManager.Client, authentication)
+		taskHandler, err = kafka.NewTaskHandler(ctx, config, mqttManager.Client, authentication)
 		if err != nil {
 			return wg, err
 		}
@@ -51,6 +51,7 @@ func Start(ctx context.Context, config configuration.Config) (wg *sync.WaitGroup
 			return wg, err
 		}
 	}
+	taskHandler.SetErrorHandler(onError)
 	taskManager.SetOnTaskListChanged(taskHandler.UpdateTasks)
 
 	return wg, nil

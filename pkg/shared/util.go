@@ -22,7 +22,6 @@ import (
 	"github.com/SENERGY-Platform/live-data-worker/pkg/configuration"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/iot"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/taskmanager"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -50,7 +49,6 @@ func ParseSubscriptionTopic(config configuration.Config, topic string, username 
 	var jwt auth.JwtToken
 	if config.MgwMode {
 		jwt, err = authentication.GetSelfToken()
-
 	} else {
 		jwt, err = authentication.GetCachedUserToken(username)
 	}
@@ -172,8 +170,8 @@ func GetOutputMqttTopic(config configuration.Config, task taskmanager.Task) stri
 		task.Info.AspectId + "/" + task.Info.CharacteristicId
 }
 
+const localTimeFormat = "2006-01-02T08:04:05"
+
 func GetLocalTime() string {
-	t := time.Now()
-	return strconv.Itoa(t.Year()) + "-" + t.Month().String() + "-" + strconv.Itoa(t.Day()) + "T" +
-		strconv.Itoa(t.Hour()) + ":" + strconv.Itoa(t.Minute()) + ":" + strconv.Itoa(t.Second())
+	return time.Now().Format(localTimeFormat)
 }

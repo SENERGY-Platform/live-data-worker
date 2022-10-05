@@ -33,28 +33,30 @@ import (
 )
 
 type TaskHandler struct {
-	ctx        context.Context
-	cancel     context.CancelFunc
-	wg         *sync.WaitGroup
-	config     configuration.Config
-	mqttClient *mqtt.Client
-	topicTasks map[string][]taskmanager.Task
-	consumer   *Consumer
-	marsh      *marshaller.Marshaller
+	ctx          context.Context
+	cancel       context.CancelFunc
+	wg           *sync.WaitGroup
+	config       configuration.Config
+	mqttClient   *mqtt.Client
+	topicTasks   map[string][]taskmanager.Task
+	consumer     *Consumer
+	marsh        *marshaller.Marshaller
+	errorhandler func(err error)
 }
 
-func NewTaskHandler(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, mqttClient *mqtt.Client, authentication *auth.Auth) (*TaskHandler, error) {
+func NewTaskHandler(ctx context.Context, config configuration.Config, mqttClient *mqtt.Client, authentication *auth.Auth) (*TaskHandler, error) {
 	marsh, err := marshaller.NewMarshaller(ctx, config, authentication)
 	if err != nil {
 		return nil, err
 	}
 	return &TaskHandler{
-		ctx:        ctx,
-		wg:         wg,
-		config:     config,
-		mqttClient: mqttClient,
-		topicTasks: map[string][]taskmanager.Task{},
-		marsh:      marsh,
+		ctx:          ctx,
+		wg:           &sync.WaitGroup{},
+		config:       config,
+		mqttClient:   mqttClient,
+		topicTasks:   map[string][]taskmanager.Task{},
+		marsh:        marsh,
+		errorhandler: defaultErrorHandler,
 	}, nil
 }
 
@@ -72,11 +74,11 @@ func (h *TaskHandler) UpdateTasks(tasks []taskmanager.Task) {
 		}
 		h.wg.Wait()
 		ctx, cancel := context.WithCancel(h.ctx)
-		h.cancel = cancel
+		h.cancel = cancel // TODO problematic when subscriptions change rapidly, need to update on the fly
 		consumer, err := newConsumer(ctx, h.wg, h.config.KafkaUrl, maps.Keys(topicTasks), h.config.KafkaConsumerGroup,
 			Latest, h.onMessage, h.onError, h.config.Debug)
 		if err != nil {
-			panic(err)
+			h.errorhandler(err)
 		}
 		h.consumer = consumer
 	}
@@ -85,6 +87,10 @@ func (h *TaskHandler) UpdateTasks(tasks []taskmanager.Task) {
 		b, _ := json.MarshalIndent(h.topicTasks, "", "  ")
 		log.Println("[TASKS] " + string(b))
 	}
+}
+
+func (h *TaskHandler) SetErrorHandler(errorhandler func(err error)) {
+	h.errorhandler = errorhandler
 }
 
 func (h *TaskHandler) onMessage(topic string, msg []byte, _ time.Time) error {
@@ -119,13 +125,10 @@ func (h *TaskHandler) onMessage(topic string, msg []byte, _ time.Time) error {
 }
 
 func (h *TaskHandler) onError(err error, _ *Consumer) {
-	log.Println("ERROR: Kafka Consumer: " + err.Error() + "\n Restarting Consumer...")
-	h.cancel()
-	h.wg.Wait()
-	h.consumer = nil
-	tasks := []taskmanager.Task{}
-	for _, t := range h.topicTasks {
-		tasks = append(tasks, t...)
-	}
-	h.UpdateTasks(tasks)
+	h.errorhandler(err)
+}
+
+func defaultErrorHandler(err error) {
+	log.Println("[WARNING] No Error Handler configured")
+	log.Println("[ERROR] ", err.Error())
 }

@@ -49,68 +49,68 @@ type Consumer struct {
 	debug          bool
 }
 
-func (this *Consumer) start() error {
+func (c *Consumer) start() (err error) {
 	config := sarama.NewConfig()
-	config.Consumer.Offsets.Initial = this.offset
+	config.Consumer.Offsets.Initial = c.offset
 
-	client, err := sarama.NewConsumerGroup(strings.Split(this.kafkaBootstrap, ","), this.groupId, config)
+	client, err := sarama.NewConsumerGroup(strings.Split(c.kafkaBootstrap, ","), c.groupId, config)
 	if err != nil {
-		log.Panicf("Error creating Consumer group client: %v", err)
+		return err
 	}
 
 	go func() {
 		for {
 			select {
-			case <-this.ctx.Done():
+			case <-c.ctx.Done():
 				log.Println("close kafka reader")
 				return
 			default:
-				if err := client.Consume(this.ctx, this.topics, this); err != nil {
-					log.Panicf("Error from Consumer: %v", err)
+				if err = client.Consume(c.ctx, c.topics, c); err != nil {
+					c.errorhandler(err, nil)
 				}
 				// check if context was cancelled, signaling that the Consumer should stop
-				if this.ctx.Err() != nil {
+				if c.ctx.Err() != nil {
 					return
 				}
-				this.ready = make(chan bool)
+				c.ready = make(chan bool)
 			}
 		}
 	}()
 
-	<-this.ready // Await till the Consumer has been set up
+	<-c.ready // Await till the Consumer has been set up
 	log.Println("Kafka Consumer up and running...")
 
 	return err
 }
 
-func (this *Consumer) Setup(sarama.ConsumerGroupSession) error {
+func (c *Consumer) Setup(sarama.ConsumerGroupSession) error {
 	// Mark the Consumer as ready
-	close(this.ready)
-	this.wg.Add(1)
+	close(c.ready)
+	c.wg.Add(1)
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
-func (this *Consumer) Cleanup(sarama.ConsumerGroupSession) error {
+func (c *Consumer) Cleanup(sarama.ConsumerGroupSession) error {
 	log.Println("Cleaned up kafka session")
-	this.wg.Done()
+	c.wg.Done()
 	return nil
 }
 
 // ConsumeClaim must start a Consumer loop of ConsumerGroupClaim's Messages().
-func (this *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
 		select {
-		case <-this.ctx.Done():
+		case <-c.ctx.Done():
 			log.Println("Ignoring queued kafka messages for faster shutdown")
 			return nil
 		default:
-			if this.debug {
+			if c.debug {
 				log.Println(message.Topic, message.Timestamp, string(message.Value))
 			}
-			err := this.listener(message.Topic, message.Value, message.Timestamp)
+			err := c.listener(message.Topic, message.Value, message.Timestamp)
 			if err != nil {
-				this.errorhandler(err, this)
+				c.errorhandler(err, c)
 			}
 			session.MarkMessage(message, "")
 		}

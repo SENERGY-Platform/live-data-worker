@@ -30,10 +30,11 @@ import (
 )
 
 type TaskHandler struct {
-	client     *Client
-	config     configuration.Config
-	topicTasks map[string][]taskmanager.Task
-	marsh      *marshaller.Marshaller
+	client       *Client
+	config       configuration.Config
+	topicTasks   map[string][]taskmanager.Task
+	marsh        *marshaller.Marshaller
+	errorhandler func(err error)
 }
 
 func NewTaskHandler(ctx context.Context, client *Client, config configuration.Config, authentication *auth.Auth) (*TaskHandler, error) {
@@ -41,7 +42,7 @@ func NewTaskHandler(ctx context.Context, client *Client, config configuration.Co
 	if err != nil {
 		return nil, err
 	}
-	return &TaskHandler{client: client, config: config, topicTasks: map[string][]taskmanager.Task{}, marsh: marsh}, nil
+	return &TaskHandler{client: client, config: config, topicTasks: map[string][]taskmanager.Task{}, marsh: marsh, errorhandler: defaultErrorHandler}, nil
 }
 
 func (h *TaskHandler) UpdateTasks(tasks []taskmanager.Task) {
@@ -52,26 +53,31 @@ func (h *TaskHandler) UpdateTasks(tasks []taskmanager.Task) {
 	}
 	missing, added := shared.GetMissingOrAddedElements(maps.Keys(h.topicTasks), maps.Keys(topicTasks))
 	if len(missing) > 0 {
-		err := h.client.Unsubscribe(missing...)
-		if err != nil {
-			log.Println("[ERROR] ", err.Error())
-			// TODO ?
-			return
-		}
+		go func() { // respect paho requirements
+			err := h.client.Unsubscribe(missing...)
+			if err != nil {
+				h.errorhandler(err)
+			}
+		}()
 	}
 	for _, topic := range added {
-		err := h.client.Subscribe(topic, h.onDeviceMessage)
-		if err != nil {
-			log.Println("[ERROR] ", err.Error())
-			// TODO ?
-			return
-		}
+		topic := topic
+		go func() { // respect paho requirements
+			err := h.client.Subscribe(topic, h.onDeviceMessage)
+			if err != nil {
+				h.errorhandler(err)
+			}
+		}()
 	}
 	h.topicTasks = topicTasks
 	if h.config.Debug {
 		b, _ := json.MarshalIndent(h.topicTasks, "", "  ")
 		log.Println("[TASKS] " + string(b))
 	}
+}
+
+func (h *TaskHandler) SetErrorHandler(errorhandler func(err error)) {
+	h.errorhandler = errorhandler
 }
 
 func (h *TaskHandler) onDeviceMessage(_ paho.Client, message paho.Message) {
@@ -84,12 +90,17 @@ func (h *TaskHandler) onDeviceMessage(_ paho.Client, message paho.Message) {
 		}
 		marshalled, err := h.marsh.Resolve(task.Info.DeviceId, task.Info.AspectId, task.Info.FunctionId, task.Info.ServiceId, task.Info.CharacteristicId, value)
 		b, _ := json.Marshal(marshalled)
-		err = h.client.Publish(shared.GetOutputMqttTopic(h.config, task), string(b))
-		if err != nil {
-			log.Println("[ERROR] ", err.Error())
-			// TODO ?
-			return
-		}
+		go func() { // respect paho requirements
+			err = h.client.Publish(shared.GetOutputMqttTopic(h.config, task), string(b))
+			if err != nil {
+				h.errorhandler(err)
+			}
+		}()
 		deduplicate[task.Info.DeviceId+task.Info.AspectId+task.Info.FunctionId+task.Info.ServiceId+task.Info.CharacteristicId] = 0
 	}
+}
+
+func defaultErrorHandler(err error) {
+	log.Println("[WARNING] No Error Handler configured")
+	log.Println("[ERROR] ", err.Error())
 }

@@ -36,6 +36,7 @@ type Config struct {
 	PermissionsUrl      string `json:"permissions_url"`
 	DeviceManagerUrl    string `json:"device_manager_url"`
 	DeviceRepositoryUrl string `json:"device_repository_url"`
+	IotFallbackFile     string `json:"iot_fallback_file"`
 
 	KafkaUrl           string `json:"kafka_url"`
 	KafkaConsumerGroup string `json:"kafka_consumer_group"`
@@ -66,13 +67,13 @@ func (config Config) ToDcConf() dc_conf.Config {
 		DeviceManagerUrl:              config.DeviceManagerUrl,
 		DeviceRepositoryUrl:           config.DeviceRepositoryUrl,
 		PermissionsUrl:                config.PermissionsUrl,
-		UseIotFallback:                false,
+		UseIotFallback:                config.MgwMode,
 		AuthEndpoint:                  config.AuthEndpoint,
 		AuthClientId:                  config.AuthClientId,
 		AuthUserName:                  config.AuthUserName,
 		AuthPassword:                  config.AuthPassword,
 		MgwConceptRepoRefreshInterval: 3600,
-		IotFallbackFile:               "devicerepo_fallback.json",
+		IotFallbackFile:               config.IotFallbackFile,
 	}
 }
 

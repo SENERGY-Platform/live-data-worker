@@ -38,9 +38,12 @@ func New() *Cache {
 	return &Cache{cache: gocache.New(10*time.Second, 30*time.Second)}
 }
 func (c *Cache) Get(key string) (item *Item, err error) {
+	item = &Item{
+		Key: key,
+	}
 	value, ok := c.cache.Get(key)
 	if !ok {
-		return nil, errors.New("cache miss")
+		return nil, ErrNotFound
 	}
 
 	item.Value, ok = value.([]byte)

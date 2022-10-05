@@ -44,7 +44,7 @@ func Start(ctx context.Context, config configuration.Config, authentication *aut
 
 	server := &http.Server{Addr: ":" + config.ServerPort, Handler: router}
 	go func() {
-		log.Println("listening on ", server.Addr)
+		log.Println("listening on", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			debug.PrintStack()
 			log.Fatal("FATAL:", err)

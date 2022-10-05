@@ -74,6 +74,9 @@ func (m *Manager) onSubscribe(_ paho.Client, message paho.Message) {
 	}
 	matches := m.subscribeRgx.FindStringSubmatch(msg)
 	if len(matches) < 3 {
+		if m.config.Debug {
+			log.Println("[MQTT] Ignoring message: Does not match subscribe regexp")
+		}
 		return
 	}
 	clientId, topic := matches[1], matches[2]
@@ -111,6 +114,9 @@ func (m *Manager) onUnsubscribe(_ paho.Client, message paho.Message) {
 	}
 	matches := m.unsubscribeRgx.FindStringSubmatch(msg)
 	if len(matches) < 3 {
+		if m.config.Debug {
+			log.Println("[MQTT] Ignoring message: Does not match unsubscribe regexp")
+		}
 		return
 	}
 	clientId, topic := matches[1], matches[2]
@@ -122,8 +128,11 @@ func (m *Manager) onLog(_ paho.Client, message paho.Message) {
 	if m.config.Debug {
 		log.Println("[MQTT] " + message.Topic() + ": " + msg)
 	}
-	matches := m.subscribeRgx.FindStringSubmatch(msg)
+	matches := m.disconnectRgx.FindStringSubmatch(msg)
 	if len(matches) < 2 {
+		if m.config.Debug {
+			log.Println("[MQTT] Ignoring message: Does not match disconnect regexp")
+		}
 		return
 	}
 	clientId := matches[1]

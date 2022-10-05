@@ -5,6 +5,7 @@
   "device_manager_url": "https://api.senergy.infai.org/device-manager",
   "permissions_url": "https://api.senergy.infai.org/permissions/query",
   "device_repository_url": "https://api.senergy.infai.org/device-repository",
+  "iot_fallback_file": "devicerepo_fallback.json",
   "kafka_url": "kafka.kafka:9092",
   "kafka_consumer_group": "live-data-worker",
   "mqtt_host": "127.0.0.1",

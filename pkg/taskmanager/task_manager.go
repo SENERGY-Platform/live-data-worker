@@ -53,6 +53,9 @@ func (manager *Manager) SetOnTaskListChanged(onTaskListChanged func([]Task)) {
 
 // AddTasks Adds multiple tasks. If a task with the same ID already exists, it is overwritten. Blocks other operations until onTaskListChanged completes.
 func (manager *Manager) AddTasks(tasks []Task) {
+	if len(tasks) == 0 {
+		return
+	}
 	manager.mux.Lock()
 	for _, task := range tasks {
 		manager.tasks[task.Id] = task
@@ -64,7 +67,18 @@ func (manager *Manager) AddTasks(tasks []Task) {
 // DeleteTasks Deletes multiple task. Blocks other operations until onTaskListChanged completes.
 func (manager *Manager) DeleteTasks(ids []string) {
 	manager.mux.Lock()
+	filteredIds := []string{}
 	for _, id := range ids {
+		_, ok := manager.tasks[id]
+		if ok {
+			filteredIds = append(filteredIds, id)
+		}
+	}
+	if len(filteredIds) == 0 {
+		manager.mux.Unlock()
+		return
+	}
+	for _, id := range filteredIds {
 		delete(manager.tasks, id)
 	}
 	manager.onTaskListChanged(maps.Values(manager.tasks))

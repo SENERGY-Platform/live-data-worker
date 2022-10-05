@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 func init() {
@@ -43,6 +44,7 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, "only clean session allowed", http.StatusBadRequest)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_, err = fmt.Fprint(writer, `{"result": "ok"}`)
 		if err != nil {
 			log.Println("ERROR: Could not write HTTP response " + err.Error())
@@ -58,29 +60,37 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 		}
 		resp := SubscribeWebhookMsgResponse{
 			Result: "ok",
-			Topics: []WebhookmsgTopic{},
+			Topics: make([]WebhookmsgTopic, len(msg.Topics)),
 		}
-		for _, topicReq := range msg.Topics {
-			qos := topicReq.Qos
-			if msg.Username != config.AuthClientId {
-				_, _, _, _, _, _, _, err := shared.ParseSubscriptionTopic(config, topicReq.Topic, msg.Username, authentication)
-				if err == nil {
-					err := mqttClient.Publish(config.MqttSubscribeTopic, shared.GetLocalTime()+": "+msg.ClientId+" "+topicReq.Topic+" "+strconv.FormatInt(topicReq.Qos, 10)+" "+msg.Username)
-					if err != nil {
-						http.Error(writer, err.Error(), http.StatusInternalServerError)
-						return
+		wg := sync.WaitGroup{}
+		wg.Add(len(msg.Topics))
+		for i, topicReq := range msg.Topics {
+			i := i
+			topicReq := topicReq
+			go func() {
+				qos := topicReq.Qos
+				if msg.Username != config.AuthClientId {
+					_, _, _, _, _, _, _, err := shared.ParseSubscriptionTopic(config, topicReq.Topic, msg.Username, authentication)
+					if err == nil {
+						err := mqttClient.Publish(config.MqttSubscribeTopic, shared.GetLocalTime()+": "+msg.ClientId+" "+strconv.FormatInt(topicReq.Qos, 10)+" "+topicReq.Topic+" "+msg.Username)
+						if err != nil {
+							http.Error(writer, err.Error(), http.StatusInternalServerError)
+							return
+						}
+					} else {
+						qos = 128
 					}
-				} else {
-					qos = 128
 				}
-			}
-			resp.Topics = append(resp.Topics, WebhookmsgTopic{
-				Topic: topicReq.Topic,
-				Qos:   qos,
-			})
+				resp.Topics[i] = WebhookmsgTopic{
+					Topic: topicReq.Topic,
+					Qos:   qos,
+				}
+				wg.Done()
+			}()
 		}
+		wg.Wait()
 
-		writer.Header().Set("Content-Type", "application/json")
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(resp)
 		if err != nil {
 			log.Println("ERROR: Could not write HTTP response " + err.Error())
@@ -102,6 +112,7 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 				return
 			}
 		}
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_, err = fmt.Fprint(writer, `{"result": "ok"}`)
 		if err != nil {
 			log.Println("ERROR: Could not write HTTP response " + err.Error())
@@ -120,6 +131,7 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_, err = fmt.Fprint(writer, `{}`)
 		if err != nil {
 			log.Println("ERROR: Could not write HTTP response " + err.Error())
@@ -137,6 +149,7 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusUnauthorized)
 			return
 		}
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_, err = fmt.Fprint(writer, `{"result": "ok"}`)
 		if err != nil {
 			log.Println("ERROR: Could not write HTTP response " + err.Error())

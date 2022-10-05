@@ -22,4 +22,5 @@ import (
 
 type TaskHandler interface {
 	UpdateTasks(tasks []taskmanager.Task)
+	SetErrorHandler(func(err error))
 }
