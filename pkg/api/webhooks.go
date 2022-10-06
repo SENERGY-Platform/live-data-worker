@@ -93,6 +93,10 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			}()
 		}
 		wg.Wait()
+		if config.Debug {
+			b, _ := json.Marshal(resp)
+			log.Println(b)
+		}
 
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(resp)
