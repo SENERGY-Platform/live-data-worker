@@ -135,10 +135,11 @@ func (h *TaskHandler) onMessage(topic string, msg []byte, _ time.Time) error {
 
 func (h *TaskHandler) addReader(topic string) {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{h.config.KafkaUrl},
-		GroupID: h.config.KafkaConsumerGroup,
-		Topic:   topic,
-		MaxWait: 500 * time.Millisecond,
+		Brokers:     []string{h.config.KafkaUrl},
+		GroupID:     h.config.KafkaConsumerGroup,
+		Topic:       topic,
+		MaxWait:     500 * time.Millisecond,
+		StartOffset: kafka.LastOffset,
 	})
 	ctx, cancel := context.WithCancel(h.ctx)
 	h.topicReaderMux.Lock()
