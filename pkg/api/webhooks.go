@@ -82,7 +82,7 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 							return
 						}
 					} else {
-						qos = 128
+						qos = 128 // "not allowed or possible"
 					}
 				}
 				resp.Topics[i] = WebhookmsgTopic{
@@ -95,7 +95,7 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 		wg.Wait()
 		if config.Debug {
 			b, _ := json.Marshal(resp)
-			log.Println(b)
+			log.Println(string(b))
 		}
 
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
