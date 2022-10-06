@@ -45,6 +45,11 @@ func Start(ctx context.Context, onError func(err error), config configuration.Co
 	taskManager := taskmanager.New()
 	mqttManager, err := mqtt.NewManager(ctx, wg, config, taskManager, authentication)
 	mqttClient = *mqttManager.Client
+	err = mqttManager.Init()
+	if err != nil {
+		onError(err)
+		return
+	}
 
 	var taskHandler interfaces.TaskHandler
 	if !config.MgwMode {

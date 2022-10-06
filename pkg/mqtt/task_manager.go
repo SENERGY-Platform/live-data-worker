@@ -52,19 +52,23 @@ func NewManager(ctx context.Context, wg *sync.WaitGroup, config configuration.Co
 		unsubscribeRgx: regexp.MustCompile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}: (\\S+) (\\S+)\\s*(.*)"),
 		disconnectRgx:  regexp.MustCompile("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}: Client (\\S+) disconnected\\."),
 	}
-	err = client.Subscribe(config.MqttSubscribeTopic, manager.onSubscribe)
-	if err != nil {
-		return
-	}
-	err = client.Subscribe(config.MqttUnsubscribeTopic, manager.onUnsubscribe)
-	if err != nil {
-		return
-	}
-	err = client.Subscribe(config.MqttLogTopic, manager.onLog)
-	if err != nil {
-		return
-	}
 	return
+}
+
+func (m *Manager) Init() (err error) {
+	err = m.Client.Subscribe(m.config.MqttSubscribeTopic, m.onSubscribe)
+	if err != nil {
+		return
+	}
+	err = m.Client.Subscribe(m.config.MqttUnsubscribeTopic, m.onUnsubscribe)
+	if err != nil {
+		return
+	}
+	err = m.Client.Subscribe(m.config.MqttLogTopic, m.onLog)
+	if err != nil {
+		return
+	}
+	return err
 }
 
 func (m *Manager) onSubscribe(_ paho.Client, message paho.Message) {
