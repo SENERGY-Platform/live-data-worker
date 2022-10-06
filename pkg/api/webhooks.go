@@ -143,7 +143,7 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
 			return
 		}
-		err = mqttClient.Publish(config.MqttLogTopic, shared.GetLocalTime()+": "+msg.ClientId+" disconnected.")
+		err = mqttClient.Publish(config.MqttLogTopic, shared.GetLocalTime()+": Client "+msg.ClientId+" disconnected.")
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
