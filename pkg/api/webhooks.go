@@ -59,12 +59,9 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if mqttClient == nil || !mqttClient.Ready() {
-			time.Sleep(5 * time.Second)
-			if mqttClient == nil || !mqttClient.Ready() {
-				http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
-				return
-			}
+		if !mqttDelayReady(mqttClient) {
+			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
+			return
 		}
 		resp := SubscribeWebhookMsgResponse{
 			Result: "ok",
@@ -117,12 +114,9 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if mqttClient == nil || !mqttClient.Ready() {
-			time.Sleep(5 * time.Second)
-			if mqttClient == nil || !mqttClient.Ready() {
-				http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
-				return
-			}
+		if !mqttDelayReady(mqttClient) {
+			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
+			return
 		}
 		for _, topic := range msg.Topics {
 			err := mqttClient.Publish(config.MqttUnsubscribeTopic, shared.GetLocalTime()+": "+msg.ClientId+" "+topic+" "+msg.Username)
@@ -145,12 +139,9 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if mqttClient == nil || !mqttClient.Ready() {
-			time.Sleep(5 * time.Second)
-			if mqttClient == nil || !mqttClient.Ready() {
-				http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
-				return
-			}
+		if !mqttDelayReady(mqttClient) {
+			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
+			return
 		}
 		err = mqttClient.Publish(config.MqttLogTopic, shared.GetLocalTime()+": "+msg.ClientId+" disconnected.")
 		if err != nil {
@@ -181,4 +172,17 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			log.Println("ERROR: Could not write HTTP response " + err.Error())
 		}
 	})
+}
+
+func mqttDelayReady(client *mqtt.Client) bool {
+	if client != nil && client.Ready() {
+		return true
+	}
+	timeout := 25 * time.Second
+	retry := 500 * time.Millisecond
+	start := time.Now()
+	for (client == nil || !client.Ready()) && time.Now().Sub(start) < timeout {
+		time.Sleep(retry)
+	}
+	return client != nil && client.Ready()
 }
