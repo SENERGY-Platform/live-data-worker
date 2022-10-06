@@ -63,23 +63,31 @@ func NewMarshaller(ctx context.Context, config configuration.Config, authenticat
 	}, err
 }
 
-func (m *Marshaller) Resolve(deviceId, aspectId, functionId, serviceId, characteristicId string, msg interface{}) (value interface{}, err error) {
+func (m *Marshaller) Resolve(deviceId, aspectId, functionId, serviceId, characteristicId, username string, msg interface{}) (value interface{}, err error) {
 	var service model.Service
 	var protocol model.Protocol
 	var aspectNode model.AspectNode
-	token, err := m.authentication.GetSelfToken()
+	var jwt auth.JwtToken
+	if m.config.MgwMode {
+		jwt, err = m.authentication.GetSelfToken()
+	} else {
+		jwt, err = m.authentication.GetCachedUserToken(username)
+	}
 	if err != nil {
 		return nil, err
 	}
-	device, err := m.iot.GetDevice(string(token), deviceId)
+
+	token := string(jwt)
+
+	device, err := m.iot.GetDevice(token, deviceId)
 	if err != nil {
 		return nil, err
 	}
-	service, err = m.iot.GetService(string(token), device, serviceId)
+	service, err = m.iot.GetService(token, device, serviceId)
 	if err != nil {
 		return nil, err
 	}
-	protocol, err = m.iot.GetProtocol(string(token), service.ProtocolId)
+	protocol, err = m.iot.GetProtocol(token, service.ProtocolId)
 	if err != nil {
 		return nil, err
 	}

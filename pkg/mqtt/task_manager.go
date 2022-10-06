@@ -106,6 +106,7 @@ func (m *Manager) onSubscribe(_ paho.Client, message paho.Message) {
 			FunctionId:       functionId,
 			AspectId:         aspectId,
 			CharacteristicId: characteristicId,
+			Username:         username,
 		},
 	}
 	m.tasks.AddTask(task)

@@ -88,7 +88,7 @@ func (h *TaskHandler) onDeviceMessage(_ paho.Client, message paho.Message) {
 		if ok {
 			continue
 		}
-		marshalled, err := h.marsh.Resolve(task.Info.DeviceId, task.Info.AspectId, task.Info.FunctionId, task.Info.ServiceId, task.Info.CharacteristicId, value)
+		marshalled, err := h.marsh.Resolve(task.Info.DeviceId, task.Info.AspectId, task.Info.FunctionId, task.Info.ServiceId, task.Info.CharacteristicId, task.Info.Username, value)
 		b, _ := json.Marshal(marshalled)
 		go func() { // respect paho requirements
 			err = h.client.Publish(shared.GetOutputMqttTopic(h.config, task), string(b))

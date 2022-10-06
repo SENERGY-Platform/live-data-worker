@@ -122,7 +122,10 @@ func (h *TaskHandler) onMessage(topic string, msg []byte, _ time.Time) error {
 		if ok {
 			continue
 		}
-		marshalled, err := h.marsh.Resolve(task.Info.DeviceId, task.Info.AspectId, task.Info.FunctionId, task.Info.ServiceId, task.Info.CharacteristicId, msgDecoded.Value)
+		marshalled, err := h.marsh.Resolve(task.Info.DeviceId, task.Info.AspectId, task.Info.FunctionId, task.Info.ServiceId, task.Info.CharacteristicId, task.Info.Username, msgDecoded.Value)
+		if err != nil {
+			h.errorhandler(err)
+		}
 		b, _ := json.Marshal(marshalled)
 		err = h.mqttClient.Publish(shared.GetOutputMqttTopic(h.config, task), string(b))
 		if err != nil {

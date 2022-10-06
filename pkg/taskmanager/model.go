@@ -17,5 +17,5 @@
 package taskmanager
 
 type TaskInfo struct {
-	DeviceId, LocalDeviceId, ServiceId, LocalServiceId, FunctionId, AspectId, CharacteristicId string
+	DeviceId, LocalDeviceId, ServiceId, LocalServiceId, FunctionId, AspectId, CharacteristicId, Username string
 }
