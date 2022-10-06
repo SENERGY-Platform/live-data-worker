@@ -62,6 +62,10 @@ func newClient(ctx context.Context, wg *sync.WaitGroup, config configuration.Con
 	return mqtt, nil
 }
 
+func (c *Client) Ready() bool {
+	return c.client != nil && c.client.IsConnected()
+}
+
 func (c *Client) Publish(topic string, msg string) (err error) {
 	if !c.client.IsConnected() {
 		return errors.New("mqtt client not connected")

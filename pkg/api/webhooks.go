@@ -58,8 +58,8 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if mqttClient == nil {
-			http.Error(writer, err.Error(), http.StatusServiceUnavailable)
+		if mqttClient == nil || !mqttClient.Ready() {
+			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
 			return
 		}
 		resp := SubscribeWebhookMsgResponse{
@@ -109,8 +109,8 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if mqttClient == nil {
-			http.Error(writer, err.Error(), http.StatusServiceUnavailable)
+		if mqttClient == nil || !mqttClient.Ready() {
+			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
 			return
 		}
 		for _, topic := range msg.Topics {
@@ -134,8 +134,8 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if mqttClient == nil {
-			http.Error(writer, err.Error(), http.StatusServiceUnavailable)
+		if mqttClient == nil || !mqttClient.Ready() {
+			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
 			return
 		}
 		err = mqttClient.Publish(config.MqttLogTopic, shared.GetLocalTime()+": "+msg.ClientId+" disconnected.")

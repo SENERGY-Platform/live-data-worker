@@ -33,9 +33,9 @@ func Start(ctx context.Context, onError func(err error), config configuration.Co
 
 	authentication := auth.New(config.AuthEndpoint, config.AuthClientId, config.AuthClientSecret, config.AuthUserName, config.AuthPassword)
 
-	var mqttClient *mqtt.Client
+	var mqttClient mqtt.Client
 	if !config.MgwMode {
-		err := api.Start(ctx, config, authentication, mqttClient)
+		err := api.Start(ctx, config, authentication, &mqttClient)
 		if err != nil {
 			onError(err)
 			return
@@ -44,7 +44,7 @@ func Start(ctx context.Context, onError func(err error), config configuration.Co
 
 	taskManager := taskmanager.New()
 	mqttManager, err := mqtt.NewManager(ctx, wg, config, taskManager, authentication)
-	mqttClient = mqttManager.Client
+	mqttClient = *mqttManager.Client
 
 	var taskHandler interfaces.TaskHandler
 	if !config.MgwMode {
