@@ -152,7 +152,7 @@ func (h *TaskHandler) addReader(topic string) {
 		for {
 			m, err := r.FetchMessage(ctx)
 			if err != nil {
-				if err == io.EOF || err == context.Canceled {
+				if err == io.EOF || err == context.Canceled || ctx.Err() != nil {
 					return
 				}
 				h.errorhandler(err)
@@ -160,7 +160,7 @@ func (h *TaskHandler) addReader(topic string) {
 			}
 			err = h.onMessage(m.Topic, m.Value, m.Time)
 			if err != nil {
-				if err == io.EOF || err == context.Canceled {
+				if err == io.EOF || err == context.Canceled || ctx.Err() != nil {
 					return
 				}
 				h.errorhandler(err)
@@ -168,7 +168,7 @@ func (h *TaskHandler) addReader(topic string) {
 			}
 			err = r.CommitMessages(ctx, m)
 			if err != nil {
-				if err == io.EOF || err == context.Canceled {
+				if err == io.EOF || err == context.Canceled || ctx.Err() != nil {
 					return
 				}
 				h.errorhandler(err)
