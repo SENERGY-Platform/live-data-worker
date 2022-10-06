@@ -32,15 +32,21 @@ func Start(ctx context.Context, onError func(err error), config configuration.Co
 	wg = &sync.WaitGroup{}
 
 	authentication := auth.New(config.AuthEndpoint, config.AuthClientId, config.AuthClientSecret, config.AuthUserName, config.AuthPassword)
-	taskManager := taskmanager.New()
-	mqttManager, err := mqtt.NewManager(ctx, wg, config, taskManager, authentication)
 
-	var taskHandler interfaces.TaskHandler
+	var mqttClient *mqtt.Client
 	if !config.MgwMode {
-		err = api.Start(ctx, config, authentication, mqttManager.Client)
+		err = api.Start(ctx, config, authentication, mqttClient)
 		if err != nil {
 			return wg, err
 		}
+	}
+
+	taskManager := taskmanager.New()
+	mqttManager, err := mqtt.NewManager(ctx, wg, config, taskManager, authentication)
+	mqttClient = mqttManager.Client
+
+	var taskHandler interfaces.TaskHandler
+	if !config.MgwMode {
 		taskHandler, err = kafka.NewTaskHandler(ctx, config, mqttManager.Client, authentication)
 		if err != nil {
 			return wg, err

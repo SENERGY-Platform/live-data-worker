@@ -58,6 +58,10 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
+		if mqttClient == nil {
+			http.Error(writer, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
 		resp := SubscribeWebhookMsgResponse{
 			Result: "ok",
 			Topics: make([]WebhookmsgTopic, len(msg.Topics)),
@@ -105,6 +109,10 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			http.Error(writer, err.Error(), http.StatusBadRequest)
 			return
 		}
+		if mqttClient == nil {
+			http.Error(writer, err.Error(), http.StatusServiceUnavailable)
+			return
+		}
 		for _, topic := range msg.Topics {
 			err := mqttClient.Publish(config.MqttUnsubscribeTopic, shared.GetLocalTime()+": "+msg.ClientId+" "+topic+" "+msg.Username)
 			if err != nil {
@@ -124,6 +132,10 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 		err := json.NewDecoder(req.Body).Decode(&msg)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if mqttClient == nil {
+			http.Error(writer, err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 		err = mqttClient.Publish(config.MqttLogTopic, shared.GetLocalTime()+": "+msg.ClientId+" disconnected.")
