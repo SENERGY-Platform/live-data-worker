@@ -40,7 +40,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	var shutdownTime time.Time
 
-	wg, err := pkg.Start(ctx, func(err error) {
+	wg := pkg.Start(ctx, func(err error) {
 		log.Println("[ERROR]", err.Error())
 		log.Println("Shutting down due to error!")
 		shutdownTime = time.Now()
