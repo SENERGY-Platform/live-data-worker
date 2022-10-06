@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 func init() {
@@ -59,8 +60,11 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			return
 		}
 		if mqttClient == nil || !mqttClient.Ready() {
-			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
-			return
+			time.Sleep(5 * time.Second)
+			if mqttClient == nil || !mqttClient.Ready() {
+				http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
+				return
+			}
 		}
 		resp := SubscribeWebhookMsgResponse{
 			Result: "ok",
@@ -114,8 +118,11 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			return
 		}
 		if mqttClient == nil || !mqttClient.Ready() {
-			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
-			return
+			time.Sleep(5 * time.Second)
+			if mqttClient == nil || !mqttClient.Ready() {
+				http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
+				return
+			}
 		}
 		for _, topic := range msg.Topics {
 			err := mqttClient.Publish(config.MqttUnsubscribeTopic, shared.GetLocalTime()+": "+msg.ClientId+" "+topic+" "+msg.Username)
@@ -139,8 +146,11 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			return
 		}
 		if mqttClient == nil || !mqttClient.Ready() {
-			http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
-			return
+			time.Sleep(5 * time.Second)
+			if mqttClient == nil || !mqttClient.Ready() {
+				http.Error(writer, "mqttClient not initialized", http.StatusServiceUnavailable)
+				return
+			}
 		}
 		err = mqttClient.Publish(config.MqttLogTopic, shared.GetLocalTime()+": "+msg.ClientId+" disconnected.")
 		if err != nil {
