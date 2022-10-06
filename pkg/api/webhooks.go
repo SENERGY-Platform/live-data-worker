@@ -27,7 +27,8 @@ func WebhookEndpoints(config configuration.Config, router *httprouter.Router, au
 			return
 		}
 		if config.Debug {
-			log.Println(fmt.Sprintf("%v", msg))
+			b, _ := json.Marshal(msg)
+			log.Println(string(b))
 		}
 		if msg.Username != config.AuthClientId {
 			token, err := authentication.GetUserToken(msg.Username, msg.Password)
