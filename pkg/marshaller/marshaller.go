@@ -18,7 +18,7 @@ package marshaller
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"github.com/SENERGY-Platform/device-command/pkg/command/dependencies/impl/cloud"
 	"github.com/SENERGY-Platform/device-command/pkg/command/dependencies/impl/mgw"
 	"github.com/SENERGY-Platform/device-command/pkg/command/dependencies/interfaces"
@@ -91,13 +91,17 @@ func (m *Marshaller) Resolve(deviceId, aspectId, functionId, serviceId, characte
 	if err != nil {
 		return nil, err
 	}
+	b, err := json.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
 
 	return m.marsh.UnmarshalV2(marshlib.UnmarshallingV2Request{
 		Service:          service,
 		Protocol:         protocol,
 		CharacteristicId: characteristicId,
 		Message: map[string]string{
-			"data":     fmt.Sprintf("%v", msg),
+			"data":     string(b),
 			"metadata": "",
 		},
 		FunctionId:   functionId,
