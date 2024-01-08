@@ -5,8 +5,8 @@ go 1.21
 toolchain go1.21.5
 
 require (
-	github.com/SENERGY-Platform/device-command v1.0.7
-	github.com/SENERGY-Platform/external-task-worker v0.0.3
+	github.com/SENERGY-Platform/device-command v1.0.10
+	github.com/SENERGY-Platform/external-task-worker v0.0.4
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/julienschmidt/httprouter v1.3.0

@@ -14,10 +14,10 @@ github.com/RyanCarrier/dijkstra v1.3.0 h1:lqrLMwKy8PtyDpWqZpcbzr9KkqnLJrDdQ9u3iN
 github.com/RyanCarrier/dijkstra v1.3.0/go.mod h1:9egjhC7eVsfREX6NrYS+1wHzk9C/9v2Cz26/bqpjjTc=
 github.com/SENERGY-Platform/converter v0.0.4 h1:Fajw2h4jrkIWG4sLetzURHMLbCwDlFK+ITRreKFJBoM=
 github.com/SENERGY-Platform/converter v0.0.4/go.mod h1:btnyQ+HafCfU36KacJKMBjUKbGpoQr+/8rGr5X6k1ZI=
-github.com/SENERGY-Platform/device-command v1.0.7 h1:a1py0azQZ1VA1lGxJ6Zo3uEkBl3v4PCMAOjI+tkNzes=
-github.com/SENERGY-Platform/device-command v1.0.7/go.mod h1:61X8gOn53nMMUdH9zSELTJrCN/7RUkxbeV4Q7CDlqog=
-github.com/SENERGY-Platform/external-task-worker v0.0.3 h1:dugKya3MhJnuWGOl+t6Ip+DZIpPX7EyAs47Slfy1TP0=
-github.com/SENERGY-Platform/external-task-worker v0.0.3/go.mod h1:CrOwuiCdojdmldSuYh7AxgAqyDuW1y6Fk8TVNcUiOFU=
+github.com/SENERGY-Platform/device-command v1.0.10 h1:7FozcGhk5e27pyaphM1Kvt7VyprpwbdHM+eVrzGhffU=
+github.com/SENERGY-Platform/device-command v1.0.10/go.mod h1:T3LhtKwKkdh5DUdhJzzv2MCzzZxFDjgVs5nknOL+CNA=
+github.com/SENERGY-Platform/external-task-worker v0.0.4 h1:wXtOlEkdSVDhbVy0S6h50Av8ywqe6Y6rvzrFqlwQRfs=
+github.com/SENERGY-Platform/external-task-worker v0.0.4/go.mod h1:Oa4sSC6GjAyRQQeGh7dJpSzw4HmFbVGUApLhvdAjSQ8=
 github.com/SENERGY-Platform/marshaller v0.0.3 h1:WONBstJaM7U6AhqD0muyJ/8RSuJgerwMpq4uPonRqDk=
 github.com/SENERGY-Platform/marshaller v0.0.3/go.mod h1:7qnMyNxlWY9b1Ne4kqR6JHJXUL6G4rCNw6KQ6cspjgE=
 github.com/SENERGY-Platform/models/go v0.0.0-20230824080159-16585960df38 h1:PDvFwIJBnFyKt1KeepkABNIS57+WhVj4vBw7X5JGZJw=
@@ -45,8 +45,8 @@ github.com/docker/distribution v2.8.3+incompatible h1:AtKxIZ36LoNK51+Z6RpzLpddBi
 github.com/docker/distribution v2.8.3+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v24.0.7+incompatible h1:Wo6l37AuwP3JaMnZa226lzVXGA3F9Ig1seQen0cKYlM=
 github.com/docker/docker v24.0.7+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
-github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
-github.com/docker/go-connections v0.4.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
+github.com/docker/go-connections v0.5.0 h1:USnMq7hx7gwdVZq1L49hLXaFtUdTADjXGp+uj1Br63c=
+github.com/docker/go-connections v0.5.0/go.mod h1:ov60Kzw0kKElRwhNs9UlUHAE/F9Fe6GLaXnqyDdmEXc=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/eapache/go-resiliency v1.5.0 h1:dRsaR00whmQD+SgVKlq/vCRFNgtEb5yppyeVos3Yce0=
