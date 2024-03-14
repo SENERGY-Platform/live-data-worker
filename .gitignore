@@ -3,3 +3,4 @@ device-command
 *.iml
 devicerepo_fallback.json
 .run
+live-data-worker

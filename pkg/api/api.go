@@ -24,6 +24,7 @@ import (
 	"github.com/SENERGY-Platform/live-data-worker/pkg/auth"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/configuration"
 	"github.com/SENERGY-Platform/live-data-worker/pkg/mqtt"
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
@@ -66,6 +67,6 @@ func GetRouter(config configuration.Config, authentication *auth.Auth, mqttClien
 	var handler http.Handler = router
 	handler = util.NewVersionHeaderMiddleware(handler)
 	handler = util.NewCors(handler)
-	handler = util.NewLogger(handler)
+	handler = accesslog.New(handler)
 	return handler
 }
