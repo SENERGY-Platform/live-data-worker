@@ -3,8 +3,9 @@ module github.com/SENERGY-Platform/live-data-worker
 go 1.22
 
 require (
-	github.com/SENERGY-Platform/device-command v1.0.15
-	github.com/SENERGY-Platform/external-task-worker v0.0.16
+	github.com/SENERGY-Platform/device-command v1.0.16
+	github.com/SENERGY-Platform/external-task-worker v0.0.17
+	github.com/SENERGY-Platform/service-commons v0.0.0-20240314112519-5bde66831b0d
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/julienschmidt/httprouter v1.3.0
@@ -18,9 +19,8 @@ require (
 	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
 	github.com/RyanCarrier/dijkstra v1.3.0 // indirect
 	github.com/SENERGY-Platform/converter v0.0.5 // indirect
-	github.com/SENERGY-Platform/marshaller v0.0.12 // indirect
+	github.com/SENERGY-Platform/marshaller v0.0.13 // indirect
 	github.com/SENERGY-Platform/models/go v0.0.0-20230824080159-16585960df38 // indirect
-	github.com/SENERGY-Platform/service-commons v0.0.0-20240313123621-ce10fbe36496 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.6.0 // indirect
