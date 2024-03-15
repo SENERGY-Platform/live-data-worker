@@ -3,7 +3,7 @@ module github.com/SENERGY-Platform/live-data-worker
 go 1.22
 
 require (
-	github.com/SENERGY-Platform/device-command v1.0.16
+	github.com/SENERGY-Platform/device-command v1.0.17
 	github.com/SENERGY-Platform/external-task-worker v0.0.17
 	github.com/SENERGY-Platform/service-commons v0.0.0-20240314112519-5bde66831b0d
 	github.com/eclipse/paho.mqtt.golang v1.4.3
@@ -11,7 +11,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/segmentio/kafka-go v0.4.47
-	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
+	golang.org/x/exp v0.0.0-20240314144324-c7f7c6466f7f
 )
 
 require (
