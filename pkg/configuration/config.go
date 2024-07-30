@@ -44,8 +44,8 @@ type Config struct {
 	MqttHost             string `json:"mqtt_host"`
 	MqttPort             string `json:"mqtt_port"`
 	MqttClientId         string `json:"mqtt_client_id"`
-	MqttUser             string `json:"mqtt_user"`
-	MqttPw               string `json:"mqtt_pw"`
+	MqttUser             string `json:"mqtt_user" config:"secret"`
+	MqttPw               string `json:"mqtt_pw" config:"secret"`
 	MqttPrefix           string `json:"mqtt_prefix"`
 	MqttQos              int    `json:"mqtt_qos"`
 	MqttSubscribeTopic   string `json:"mqtt_subscribe_topic"`
@@ -53,10 +53,10 @@ type Config struct {
 	MqttLogTopic         string `json:"mqtt_log_topic"`
 
 	AuthEndpoint     string `json:"auth_endpoint"`
-	AuthClientId     string `json:"auth_client_id"`
-	AuthClientSecret string `json:"auth_client_secret"`
-	AuthUserName     string `json:"auth_user_name"`
-	AuthPassword     string `json:"auth_password"`
+	AuthClientId     string `json:"auth_client_id" config:"secret"`
+	AuthClientSecret string `json:"auth_client_secret" config:"secret"`
+	AuthUserName     string `json:"auth_user_name" config:"secret"`
+	AuthPassword     string `json:"auth_password" config:"secret"`
 
 	Debug bool `json:"debug"`
 }
@@ -115,10 +115,13 @@ func handleEnvironmentVars(config *Config) {
 	configType := configValue.Type()
 	for index := 0; index < configType.NumField(); index++ {
 		fieldName := configType.Field(index).Name
+		fieldConfig := configType.Field(index).Tag.Get("config")
 		envName := fieldNameToEnvName(fieldName)
 		envValue := os.Getenv(envName)
 		if envValue != "" {
-			fmt.Println("use environment variable: ", envName, " = ", envValue)
+			if !strings.Contains(fieldConfig, "secret") {
+				fmt.Println("use environment variable: ", envName, " = ", envValue)
+			}
 			if configValue.FieldByName(fieldName).Kind() == reflect.Int64 {
 				i, _ := strconv.ParseInt(envValue, 10, 64)
 				configValue.FieldByName(fieldName).SetInt(i)
